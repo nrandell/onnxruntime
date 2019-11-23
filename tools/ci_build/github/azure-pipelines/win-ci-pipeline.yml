@@ -62,23 +62,7 @@ jobs:
        external\protobuf\cmake\$(BuildConfig)\*.exe
        external\protobuf\cmake\$(BuildConfig)\*.dll
       TargetFolder: $(Build.ArtifactStagingDirectory)
-
-  - task: CopyFiles@2
-    displayName: 'Copy VC DLLs to: $(Build.ArtifactStagingDirectory)'
-    inputs:
-      sourceFolder: $(VcDllPath)
-      Contents: |
-       **\*.dll
-      TargetFolder: $(Build.ArtifactStagingDirectory)\$(BuildConfig)
-
-  - task: CopyFiles@2
-    displayName: 'Copy VC DLLs to: $(Build.ArtifactStagingDirectory)'
-    inputs:
-      sourceFolder: $(VcDllPath)
-      Contents: |
-       **\*.dll
-      TargetFolder: $(Build.ArtifactStagingDirectory)\external\protobuf\cmake\$(BuildConfig)
-
+ 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish Pipeline Artifact'
     inputs:
