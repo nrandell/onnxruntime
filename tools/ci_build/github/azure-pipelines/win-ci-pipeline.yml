@@ -56,7 +56,6 @@ jobs:
       Contents: |
        $(BuildConfig)\*.exe
        $(BuildConfig)\*.dll
-       $(BuildConfig)\*.pdb
        $(BuildConfig)\testdata\**
        $(BuildConfig)\**\*.whl
        external\protobuf\cmake\$(BuildConfig)\*.exe
