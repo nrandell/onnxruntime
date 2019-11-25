@@ -33,7 +33,7 @@ jobs:
     displayName: 'Build'
     inputs:
       solution: '$(Build.BinariesDirectory)\$(BuildConfig)\onnxruntime.sln'
-      platform: 'x86'
+      platform: 'Win32'
       configuration: $(BuildConfig)
       msbuildArgs: $(MsbuildArguments)
       msbuildArchitecture: 'x86'
