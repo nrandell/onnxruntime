@@ -22,13 +22,6 @@ jobs:
       addToPath: true 
       architecture: 'x86'
 
-  - task: BatchScript@1
-    displayName: 'setup env'
-    inputs:
-      filename: '$(Build.SourcesDirectory)\tools\ci_build\github\windows\setup_env_x86.bat'
-      modifyEnvironment: true
-      workingFolder: '$(Build.BinariesDirectory)'
-
   - task: PythonScript@0
     displayName: 'Generate cmake config'
     inputs:
@@ -86,7 +79,7 @@ jobs:
     OrtPackageId: 'Microsoft.ML.OnnxRuntime'
     OnnxRuntimeBuildDirectory: '$(Build.BinariesDirectory)'
     DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
-    EnvSetupScript: setup_env.bat
+    EnvSetupScript: setup_env_x86.bat
     buildArch: x86
     setVcvars: true
   workspace:
