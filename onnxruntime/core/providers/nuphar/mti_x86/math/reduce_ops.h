@@ -12,7 +12,6 @@ namespace nuphar {
 constexpr auto kNupharVReduce = "nuphar_v_reduce";
 
 constexpr auto kNupharVReduceFuseDim = "nuphar_v_reduce_fuse_dim";
-constexpr auto kNupharVReduceNoParallel = "nuphar_v_reduce_no_parallel";
 
 tvm::Tensor ReduceSum(const tvm::Tensor& X,
                       const std::vector<int64_t>& axes,

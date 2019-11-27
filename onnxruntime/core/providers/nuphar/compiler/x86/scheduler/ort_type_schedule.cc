@@ -29,6 +29,10 @@ bool TryParallelX86(
   if (compute_op == nullptr) {
     return false;
   }
+  if (compute_op->attrs.count(kNupharScheduleNoParallel)) {
+    return false;
+  }
+
   const auto& shape = tensor->shape;
 
   if (compute_op->axis.size() != shape.size()) {

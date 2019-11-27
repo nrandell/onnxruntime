@@ -45,5 +45,7 @@ bool TryParallelX86(
     tvm_codegen::CodeGenContext& ctx_codegen,
     tvm_codegen::ScheduleContext& ctx_sched);
 
+constexpr auto kNupharScheduleNoParallel = "nuphar_schedule_no_parallel";
+
 }  // namespace nuphar
 }  // namespace onnxruntime
