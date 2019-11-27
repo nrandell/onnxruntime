@@ -22,8 +22,14 @@ bool TryParallelX86(
     int64_t to_dim,
     tvm_codegen::CodeGenContext& ctx_codegen,
     tvm_codegen::ScheduleContext& ctx_sched) {
-  static const tvm::ComputeOpNode* compute_op = nullptr;
-  compute_op = tensor->op.as<tvm::ComputeOpNode>();
+  auto it = ctx_sched.scheduled_tensors.find(tensor->op.get());
+  if (it != ctx_sched.scheduled_tensors.end()) {
+    if (it->second > tvm_codegen::ScheduleType::ScheduleInline) {
+      return false;
+    }
+  }
+
+  auto compute_op = tensor->op.as<tvm::ComputeOpNode>();
   if (compute_op == nullptr) {
     return false;
   }
@@ -36,18 +42,11 @@ bool TryParallelX86(
   int rank = gsl::narrow<int>(shape.size());
   tvm::Array<tvm::IterVar> to_fuse_for_parallel;
   int64_t rank_to_parallel = (to_dim ? to_dim : rank - 1);
-  tvm::Array<tvm::Expr> input0_shape;
-  if (compute_op->InputTensors().size() == 1 &&
-      gsl::narrow<int>(compute_op->InputTensors()[0]->shape.size()) == rank) {
-    input0_shape = compute_op->InputTensors()[0]->shape;
-  }
   for (int64_t i = 0; i < rank_to_parallel && i < gsl::narrow<int64_t>(compute_op->axis.size()); ++i) {
     tvm::IterVar axis = compute_op->axis[i];
     auto dom = axis->dom;
-    if (!tvm::ir::Equal(dom->extent, shape[i]) ||
-        (input0_shape.size() > 0 && !tvm::ir::Equal(input0_shape[i], shape[i]))) {
+    if (!tvm::ir::Equal(dom->extent, shape[i])) {
       // only do parallel schedule on axis not being fused or split yet
-      // also special case for single input permutation to avoid tvm issues with Transpose
       rank_to_parallel = i;
       break;
     }
