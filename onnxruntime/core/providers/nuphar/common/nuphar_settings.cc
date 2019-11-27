@@ -59,7 +59,7 @@ void SetDefaultOptions(std::map<std::string, std::string>& options) {
   options.insert(std::make_pair(cache_so_name_opt, cache_so_name_default));
 
   std::string parallel_min_workloads_opt(kNupharParallelMinWorkloads);
-  unsigned int parallel_min_workloads_default = 256;
+  unsigned int parallel_min_workloads_default = 64;  // a rough estimate of workloads based on static dimensions
   options.insert(std::make_pair(parallel_min_workloads_opt, std::to_string(parallel_min_workloads_default)));
 }
 
