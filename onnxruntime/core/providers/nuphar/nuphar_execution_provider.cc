@@ -125,8 +125,12 @@ NupharExecutionProvider::NupharExecutionProvider(const NupharExecutionProviderIn
 
   handle->shape_inference = whole_graph_shape_infer_;
 
-  // TODO: remove
-  handle->enable_per_node_parallelized = info.enable_per_node_parallel;
+#ifdef USE_OPENMP
+  handle->enable_per_node_parallelized = settings.OptionMatches(kNupharUseParallel, "1");
+#else
+  handle->enable_per_node_parallelized = false;
+#endif
+
   // TODO: remove
   handle->allow_unaligned_buffers = info.allow_unaligned_buffers;  // TODO remove this
 

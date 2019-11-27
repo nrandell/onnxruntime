@@ -85,7 +85,7 @@ tvm::Tensor ReduceValueWithoutSplit(const tvm::Tensor& X,
 
   tvm::Map<std::string, tvm::NodeRef> attrs;
   attrs.Set(kNupharVReduceFuseDim, tvm::Expr(fuse_dim));
-
+  attrs.Set(kNupharVReduceNoParallel, tvm::Expr(true));
   return tvm::compute(output_shape, l_out, name + "_regular_reduce", kNupharVReduce, attrs);
 }
 

@@ -15,6 +15,46 @@
 namespace onnxruntime {
 namespace nuphar {
 
+bool TryParallelX86(
+    const tvm::Tensor& tensor,
+    int64_t to_dim,
+    tvm_codegen::CodeGenContext& ctx_codegen,
+    tvm_codegen::ScheduleContext& ctx_sched) {
+  NupharCodeGenCtx* ctx_nuphar = Promote<NupharCodeGenCtx>(&ctx_codegen);
+  if (ctx_nuphar != nullptr && !ctx_nuphar->GetCodeGenHandle()->enable_per_node_parallelized) {
+    return false;
+  }
+
+  auto compute_op = tensor->op.as<tvm::ComputeOpNode>();
+  if (compute_op == nullptr) {
+    return false;
+  }
+  const auto& shape = tensor->shape;
+
+  if (compute_op->axis.size() != shape.size()) {
+    return false;
+  }
+
+  int rank = gsl::narrow<int>(shape.size());
+  if (rank < 2) {
+    return false;
+  }
+
+  tvm::Array<tvm::IterVar> to_fuse;
+  for (int64_t i = 0; i < (to_dim ? to_dim : rank - 1); ++i) {
+    to_fuse.push_back(compute_op->axis[i]);
+  }
+
+  tvm::IterVar parallel_axis;
+  if (to_fuse.size() > 1) {
+    ctx_sched.schedule[tensor->op].fuse(to_fuse, &parallel_axis);
+  } else {
+    parallel_axis = to_fuse[0];
+  }
+  ctx_sched.schedule[tensor->op].parallel(parallel_axis);
+  return true;
+}
+
 bool TryVectorizationX86(
     const tvm::Tensor& tensor,
     tvm_codegen::CodeGenContext& ctx_codegen,
@@ -22,7 +62,7 @@ bool TryVectorizationX86(
   CodeGenTargetX86* target = dynamic_cast<CodeGenTargetX86*>(ctx_codegen.GetCodeGenHandle()->codegen_target);
   ORT_ENFORCE(target != nullptr);
   int64_t natural_vector_size = target->NaturalVectorWidth(tensor->dtype.bits());
-
+  TryParallelX86(tensor, 0, ctx_codegen, ctx_sched);
   return TryVectorization(tensor, natural_vector_size, ctx_sched);
 }
 

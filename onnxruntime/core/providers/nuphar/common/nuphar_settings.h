@@ -45,6 +45,9 @@ constexpr static const char* kNupharActivations_DeepCpu = "deep_cpu_activation";
 // Option to control nuphar code generation target (avx / avx2 / avx512)
 constexpr static const char* kNupharCodeGenTarget = "nuphar_codegen_target";
 
+// Option to control nuphar code to run with parallel schedule, only works with OpenMP for now
+constexpr static const char* kNupharUseParallel = "nuphar_use_parallel";
+
 // cache version number (MAJOR.MINOR.PATCH) following https://semver.org/
 // 1. MAJOR version when you make incompatible changes that old cache files no longer work,
 // 2. MINOR version when you add functionality in a backwards - compatible manner, and

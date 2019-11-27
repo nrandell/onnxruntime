@@ -38,7 +38,8 @@ static const std::unordered_set<std::string> valid_keys = {
     kNupharCacheSoName,
     kNupharCacheModelChecksum,
     kNupharCacheForceNoJIT,
-    kNupharCodeGenTarget};
+    kNupharCodeGenTarget,
+    kNupharUseParallel};
 
 void SetDefaultOptions(std::map<std::string, std::string>& options) {
   // create two temporary strings to get rid of the odr-use issue introduced
@@ -56,6 +57,13 @@ void SetDefaultOptions(std::map<std::string, std::string>& options) {
   std::string cache_so_name_opt(kNupharCacheSoName);
   std::string cache_so_name_default(kNupharCacheSoName_Default);
   options.insert(std::make_pair(cache_so_name_opt, cache_so_name_default));
+
+#ifdef USE_OPENMP
+  // enable parallel by default with OpenMP
+  std::string use_parallel_opt(kNupharUseParallel);
+  std::string use_parallel_default("1");
+  options.insert(std::make_pair(use_parallel_opt, use_parallel_default));
+#endif
 }
 
 void CreateNupharCodeGenSettings(const NupharExecutionProviderInfo& info) {

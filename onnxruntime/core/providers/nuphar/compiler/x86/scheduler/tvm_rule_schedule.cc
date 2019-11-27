@@ -22,6 +22,7 @@ bool TVM_SCHEDULER_CLASS(Extern, NupharX86TVMRule)::Evaluate(
 
 static bool ReduceVScheduleNupharX86(
     const tvm::Tensor& tensor,
+    tvm_codegen::CodeGenContext& ctx_codegen,
     tvm_codegen::ScheduleContext& ctx_sched) {
   InsertRootScheduleAndClosure(tensor, ctx_sched);
 
@@ -56,33 +57,37 @@ static bool ReduceVScheduleNupharX86(
       head_dim = as_const_int(shape[0]);
 
     // unroll packed reduce by checking head dim
-    if (nullptr != head_dim) {
+    if (nullptr != head_dim &&
+        (*fuse_dim != 0) && (*head_dim) <= 4 && (*head_dim) > 1) {
       // if head_dim is already fused, don't unroll
       // only unroll 1 < head_dim <=4
-      if ((*fuse_dim != 0) && (*head_dim) <= 4 && (*head_dim) > 1) {
-        tvm::Array<tvm::IterVar> reorder_axis;
-        auto x0 = compute_op->axis[0];
+      tvm::Array<tvm::IterVar> reorder_axis;
+      auto x0 = compute_op->axis[0];
 
-        // handle fused axis if there is
-        if (has_fused_axis) {
-          for (size_t i = 1; i < gsl::narrow_cast<size_t>(*fuse_dim); ++i) {
-            reorder_axis.push_back(compute_op->axis[i]);
-          }
-          reorder_axis.push_back(fused_x);
-        } else {
-          for (size_t i = 1; i < compute_op->axis.size(); ++i) {
-            reorder_axis.push_back(compute_op->axis[i]);
-          }
+      // handle fused axis if there is
+      if (has_fused_axis) {
+        for (size_t i = 1; i < gsl::narrow_cast<size_t>(*fuse_dim); ++i) {
+          reorder_axis.push_back(compute_op->axis[i]);
         }
+        reorder_axis.push_back(fused_x);
+      } else {
+        for (size_t i = 1; i < compute_op->axis.size(); ++i) {
+          reorder_axis.push_back(compute_op->axis[i]);
+        }
+      }
 
-        for (auto& k : compute_op->reduce_axis)
-          reorder_axis.push_back(k);
-        reorder_axis.push_back(x0);
+      for (auto& k : compute_op->reduce_axis)
+        reorder_axis.push_back(k);
+      reorder_axis.push_back(x0);
 
-        ctx_sched.schedule[tensor->op].reorder(reorder_axis);
-        ctx_sched.schedule[tensor->op].unroll(x0);
+      ctx_sched.schedule[tensor->op].reorder(reorder_axis);
+      ctx_sched.schedule[tensor->op].unroll(x0);
+    } else {
+      if (compute_op->attrs.count(kNupharVReduceNoParallel) == 0) {
+        TryParallelX86(tensor, *fuse_dim, ctx_codegen, ctx_sched);
       }
     }
+
   } else if (compute_op->axis.size() > 0 &&
              tvm::as_const_int(tensor->shape[0]) != nullptr) {
     tvm::IterVar x = compute_op->axis[0];
@@ -101,7 +106,7 @@ static bool ReduceVScheduleNupharX86(
 bool TVM_SCHEDULER_CLASS(Reduce, NupharX86TVMRule)::Evaluate(
     const tvm::Tensor& tensor,
     const Node*,
-    tvm_codegen::CodeGenContext&,
+    tvm_codegen::CodeGenContext& ctx_codegen,
     tvm_codegen::ScheduleContext& ctx_sched) {
   // respect topi::kCommReduce
   if (tensor->op->tag == topi::kCommReduce) {
@@ -109,7 +114,7 @@ bool TVM_SCHEDULER_CLASS(Reduce, NupharX86TVMRule)::Evaluate(
   }
 
   if (tensor->op->tag == nuphar::kNupharVReduce) {
-    return ReduceVScheduleNupharX86(tensor, ctx_sched);
+    return ReduceVScheduleNupharX86(tensor, ctx_codegen, ctx_sched);
   }
 
   // unknown goes to InsertRootScheduleAndClosure
