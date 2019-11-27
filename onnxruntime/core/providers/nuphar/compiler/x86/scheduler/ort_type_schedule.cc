@@ -22,13 +22,6 @@ bool TryParallelX86(
     int64_t to_dim,
     tvm_codegen::CodeGenContext& ctx_codegen,
     tvm_codegen::ScheduleContext& ctx_sched) {
-  auto it = ctx_sched.scheduled_tensors.find(tensor->op.get());
-  if (it != ctx_sched.scheduled_tensors.end()) {
-    if (it->second > tvm_codegen::ScheduleType::ScheduleInline) {
-      return false;
-    }
-  }
-
   auto compute_op = tensor->op.as<tvm::ComputeOpNode>();
   if (compute_op == nullptr) {
     return false;
@@ -93,7 +86,12 @@ bool TryVectorizationX86(
   CodeGenTargetX86* target = dynamic_cast<CodeGenTargetX86*>(ctx_codegen.GetCodeGenHandle()->codegen_target);
   ORT_ENFORCE(target != nullptr);
   int64_t natural_vector_size = target->NaturalVectorWidth(tensor->dtype.bits());
+  if (!ShouldTryVectorization(tensor, ctx_sched))
+    return false;
+
+  // try to use parallel schedule when vectorizing
   TryParallelX86(tensor, 0, ctx_codegen, ctx_sched);
+
   return TryVectorization(tensor, natural_vector_size, ctx_sched);
 }
 
