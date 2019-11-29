@@ -156,7 +156,6 @@ Use the individual flags to only run the specified stages.
     parser.add_argument("--cmake_generator", choices=['Visual Studio 15 2017', 'Visual Studio 16 2019'],
                         default='Visual Studio 15 2017', help="Specify the generator that CMake invokes. This is only supported on Windows")
     parser.add_argument("--enable_multi_device_test", action='store_true', help="Test with multi-device. Mostly used for multi-device GPU")
-    parser.add_argument("--use_dml", action='store_true', help="Build with DirectML.")
     return parser.parse_args()
 
 def resolve_executable_path(command_or_path):
